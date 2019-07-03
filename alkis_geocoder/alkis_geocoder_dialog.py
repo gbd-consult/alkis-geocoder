@@ -61,7 +61,6 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
     def layerChange(self,layer):
         self.streetField.setLayer(layer)
         self.numberField.setLayer(layer)
-        self.areaCodeField.setLayer(layer)
         self.cityField.setLayer(layer)
 
 
@@ -100,7 +99,7 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         hausnummer = removeSpace(feature[self.numberField.currentField()])
         gemeinde = removeSpace(feature[self.cityField.currentField()])
         if strasse and hausnummer and gemeinde:
-            query = "SELECT * FROM gws_adressen_no_plz AS a WHERE a.strasse = \'%s\' AND a.hausnummer = \'%s\' AND a.gemeinde LIKE \'%s%%\'" % (strasse, hausnummer, gemeinde)
+            query = "SELECT * FROM gws_adressen_no_plz AS a WHERE UPPER(a.strasse) = UPPER(\'%s\') AND UPPER(a.hausnummer) = UPPER(\'%s\') AND UPPER(a.gemeinde) LIKE UPPER(\'%s%%\')" % (strasse, hausnummer, gemeinde)
             x = connection._execute(None, query)
             data = connection._fetchall(x)
             if data:
