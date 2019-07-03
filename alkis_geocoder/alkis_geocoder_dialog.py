@@ -86,23 +86,32 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
             connection (PostGisDBConnector): Connection to postgis db.
             feature (QgsFeature): feature being geocodes.
         """
-        strasse = feature[self.streetField.currentField()]
-        hausnummer = feature[self.numberField.currentField()]
-        plz = feature[self.areaCodeField.currentField()]
-        gemeinde = feature[self.cityField.currentField()]
-        if strasse and hausnummer and plz and gemeinde:
-            x = connection._execute(None,"SELECT * FROM gws_adressen AS a WHERE a.strasse = \'%s\' AND a.hausnummer = \'%s\' AND a.plz = \'%s\' and a.gemeinde = \'%s\'" % (strasse, hausnummer, plz, gemeinde))
+        def removeSpace(qv):
+            try:
+                res = str(qv).strip()
+                if res == 'NULL':
+                    return False
+                else:
+                    return res
+            except:
+                return False
+
+        strasse = removeSpace(feature[self.streetField.currentField()])
+        hausnummer = removeSpace(feature[self.numberField.currentField()])
+        gemeinde = removeSpace(feature[self.cityField.currentField()])
+        if strasse and hausnummer and gemeinde:
+            query = "SELECT * FROM gws_adressen_no_plz AS a WHERE a.strasse = \'%s\' AND a.hausnummer = \'%s\' AND a.gemeinde LIKE \'%s%%\'" % (strasse, hausnummer, gemeinde)
+            x = connection._execute(None, query)
             data = connection._fetchall(x)
             if data:
-                print(data[0])
-                x = data[0][6]
-                y = data[0][7]
+                x = data[0][5]
+                y = data[0][6]
+                feature.setAttribute('lat', x)
+                feature.setAttribute('lon', y)
                 geom = QgsPointXY(x, y)
                 feature.setGeometry(QgsGeometry.fromPointXY(geom))
-            #else:
-                #feature['lat'] = None
-                #feature['lon'] = None
-        return feature
+            else:
+                print(query)
 
 
     def generateLayer(self):
@@ -114,12 +123,17 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
 
         # create new memory layer
         layer = self.tableLayer.currentLayer()
-        features = [self.geocode(connection, f) for f in layer.getFeatures()]
+        features = [f for f in layer.getFeatures()]
         mem_layer = QgsVectorLayer("Point?crs=epsg:4326", "geocoded_layer", "memory")
         mem_layer_data = mem_layer.dataProvider()
         attr = layer.dataProvider().fields().toList()
-        mem_layer_data.addAttributes(attr)
+        mem_layer_data.addAttributes(attr + [QgsField('lat', QVariant.Double), QgsField('lon', QVariant.Double)])
         mem_layer.updateFields()
         mem_layer_data.addFeatures(features)
+        mem_layer.startEditing()
+        for f in mem_layer.getFeatures():
+            self.geocode(connection, f)
+            mem_layer.updateFeature(f)
+        mem_layer.commitChanges()
 
         QgsProject.instance().addMapLayer(mem_layer)
