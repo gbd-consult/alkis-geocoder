@@ -87,7 +87,8 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         """
         def removeSpace(qv):
             try:
-                res = str(qv).strip()
+                # pythons upper() function replaces 'ß' with 'SS'. This means we don't need to replace 'ß' here.
+                res = str(qv).strip().upper().replace('Ä','AE').replace('Ü','UE').replace('Ö','OE')
                 if res == 'NULL':
                     return False
                 else:
@@ -99,7 +100,7 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         hausnummer = removeSpace(feature[self.numberField.currentField()])
         gemeinde = removeSpace(feature[self.cityField.currentField()])
         if strasse and hausnummer and gemeinde:
-            query = "SELECT * FROM gws_adressen_no_plz AS a WHERE UPPER(a.strasse) = UPPER(\'%s\') AND UPPER(a.hausnummer) = UPPER(\'%s\') AND UPPER(a.gemeinde) LIKE UPPER(\'%s%%\')" % (strasse, hausnummer, gemeinde)
+            query = "SELECT * FROM gws_adressen_no_plz AS a WHERE a.strasse = \'%s\' AND a.hausnummer = \'%s\' AND a.gemeinde LIKE \'%s%%\'" % (strasse, hausnummer, gemeinde)
             x = connection._execute(None, query)
             data = connection._fetchall(x)
             if data:
