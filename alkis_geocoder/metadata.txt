@@ -28,7 +28,7 @@ repository=https://github.com/gbd-consult/alkis-geocoder
 # Tags are comma separated with spaces allowed
 tags=python alkis
 
-homepage=https://gbd-consult.de
+homepage=https://www.gbd-consult.de
 category=Plugins
 icon=icon.png
 # experimental flag
