@@ -52,19 +52,38 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         self.qgsSettings.endGroup()
         self.dbComboBox.addItems(connections)
 
-        self.layerChange(self.tableLayer.currentLayer())
+        self.onLayerChange(self.tableLayer.currentLayer())
 
-        self.tableLayer.layerChanged.connect(self.layerChange)
+        # only show delimitedtext layers
+        excepted = []
+        for layer in QgsProject.instance().mapLayers().values():
+            if hasattr(layer, 'providerType') and layer.providerType() != 'delimitedtext':
+                excepted.append(layer)
+        self.tableLayer.setExceptedLayerList(excepted)
+
+        self.tableLayer.layerChanged.connect(self.onLayerChange)
         self.generateLayerButton.clicked.connect(self.generateLayer)
 
+        QgsProject.instance().layerWasAdded.connect(self.onLayerAdd)
 
-    def layerChange(self,layer):
+
+    def onLayerAdd(self, layer):
+        """ gets run, when a layer gets added to the Qgis Project."""
+        if hasattr(layer, 'providerType') and layer.providerType() != 'delimitedtext':
+            excepted = self.tableLayer.exceptedLayerList()
+            excepted.append(layer)
+            self.tableLayer.setExceptedLayerList(excepted)
+
+
+    def onLayerChange(self,layer):
+        """ gets run, when the active layer of the QgsMapLayerCombobox changes."""
         self.streetField.setLayer(layer)
         self.numberField.setLayer(layer)
         self.cityField.setLayer(layer)
 
 
     def getConnection(self):
+        """ establishes a DB connection. """
         conName = self.dbComboBox.currentText()
         self.qgsSettings.beginGroup('/PostgreSQL/connections/')
         userName = self.qgsSettings.value('/%s/username/' % conName)
@@ -110,8 +129,6 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
                 feature.setAttribute('lon', y)
                 geom = QgsPointXY(x, y)
                 feature.setGeometry(QgsGeometry.fromPointXY(geom))
-            else:
-                print(query)
 
 
     def generateLayer(self):
@@ -124,7 +141,7 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         # create new memory layer
         layer = self.tableLayer.currentLayer()
         features = [f for f in layer.getFeatures()]
-        mem_layer = QgsVectorLayer("Point?crs=epsg:4326", "geocoded_layer", "memory")
+        mem_layer = QgsVectorLayer("Point?crs=epsg:25832", "geocoded_layer", "memory")
         mem_layer_data = mem_layer.dataProvider()
         attr = layer.dataProvider().fields().toList()
         mem_layer_data.addAttributes(attr + [QgsField('lat', QVariant.Double), QgsField('lon', QVariant.Double)])
