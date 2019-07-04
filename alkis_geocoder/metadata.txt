@@ -9,8 +9,9 @@
 [general]
 name=ALKIS Geocoder
 qgisMinimumVersion=3.0
+qgisMaximumVersion=3.99
 description=Adress Geocoding using an ALKIS database
-version=0.1
+version=0.1.1
 author=Geoinformatikbüro Dassau GmbH
 email=info@gbd-consult.de
 
