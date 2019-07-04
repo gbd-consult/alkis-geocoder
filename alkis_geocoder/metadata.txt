@@ -8,33 +8,27 @@
 
 [general]
 name=ALKIS Geocoder
+description=Geokodierung von Adresstabellen auf Basis einer ALKIS PostGIS Datenbank
+category=Vector
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
-description=Adress Geocoding using an ALKIS database
+website=https://plugins.gbd-consult.de
 version=0.1.1
 author=Geoinformatikbüro Dassau GmbH
 email=info@gbd-consult.de
-
-about=description
-
-tracker=https://github.com/gbd-consult/alkis-geocoder
-repository=https://github.com/gbd-consult/alkis-geocoder
+about=Geoinformatikbüro Dassau GmbH, Rethelstraße 153, 40237 Düsseldorf
 # End of mandatory metadata
 
-# Recommended items:
+# Optional items:
 
 # Uncomment the following line and add your changelog:
 # changelog=
-
-# Tags are comma separated with spaces allowed
-tags=python alkis
-
 homepage=https://www.gbd-consult.de
-category=Plugins
+tracker=https://github.com/gbd-consult/alkis-geocoder/issues
+repository=https://github.com/gbd-consult/alkis-geocoder
+# Tags are comma separated with spaces allowed
+# tags=alkis
 icon=icon.png
-# experimental flag
 experimental=False
-
-# deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False
 
