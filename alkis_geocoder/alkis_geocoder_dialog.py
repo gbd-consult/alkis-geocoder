@@ -120,7 +120,7 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         def removeSpace(qv):
             try:
                 # pythons upper() function replaces 'ß' with 'SS'. This means we don't need to replace 'ß' here.
-                res = str(qv).strip().upper().replace('Ä','AE').replace('Ü','UE').replace('Ö','OE')
+                res = str(qv).strip().upper().replace('Ä','AE').replace('Ü','UE').replace('Ö','OE').replace('-','').replace(' ','')
                 if res.endswith('STR.'):
                     res = res.replace('STR.','STRASSE')
                 if res == 'NULL':

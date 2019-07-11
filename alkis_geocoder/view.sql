@@ -4,7 +4,11 @@ CREATE OR REPLACE FUNCTION prep(text) RETURNS text
 			REPLACE(
 				REPLACE(
 					UPPER(
-						REPLACE($1,'ß','ss')
+                        REPLACE(
+                            REPLACE(
+                                REPLACE($1,'ß','ss')
+                            ,' ','')
+                        ,'-','')
 					)
 				,'Ä','AE')
 			,'Ö','OE')
