@@ -23,7 +23,7 @@
 """
 
 import os
-
+from qgis.utils import iface
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtCore import QSettings, QVariant
 from qgis.core import QgsDataSourceUri, QgsField, QgsProject, QgsVectorLayer, QgsGeometry, QgsPointXY
@@ -166,6 +166,11 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         for f in mem_layer.getFeatures():
             self.geocode(connection, f)
             mem_layer.updateFeature(f)
+        geom_features = len(list(filter(lambda x: x.hasGeometry(),[f for f in mem_layer.getFeatures()])))
+        if geom_features > 0:
+            iface.messageBar().pushSuccess('Geocodierung abgeschlossen', '%s von %s Features konnten geocodiert werden' % (geom_features, layer.featureCount()))
+        else:
+            iface.messageBar().pushCritical('Geocodierung fehlgeschlagen', 'Es konnten keine Features geocodiert werden.')
         mem_layer.commitChanges()
 
         QgsProject.instance().addMapLayer(mem_layer)
