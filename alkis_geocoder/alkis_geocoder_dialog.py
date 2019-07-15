@@ -60,7 +60,9 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         # only show delimitedtext layers
         excepted = []
         for layer in QgsProject.instance().mapLayers().values():
-            if layer.geometryType() != 4:
+            if hasattr(layer, 'providerType') and layer.providerType() not in ('delimitedtext', 'ogr'):
+                excepted.append(layer)
+            elif layer.geometryType() != 4:
                 excepted.append(layer)
         self.tableLayer.setExceptedLayerList(excepted)
 
@@ -73,10 +75,14 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
 
     def onLayerAdd(self, layer):
         """ gets run, when a layer gets added to the Qgis Project."""
-        if layer.geometryType() != 4:
-            excepted = self.tableLayer.exceptedLayerList()
+        excepted = self.tableLayer.exceptedLayerList()
+
+        if hasattr(layer, 'providerType') and layer.providerType() not in ('delimitedtext', 'ogr'):
             excepted.append(layer)
-            self.tableLayer.setExceptedLayerList(excepted)
+        elif layer.geometryType() != 4:
+            excepted.append(layer)
+
+        self.tableLayer.setExceptedLayerList(excepted)
 
 
     def onDbChange(self):
@@ -135,8 +141,12 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         gemeinde = removeSpace(feature[self.cityField.currentField()])
         if strasse and hausnummer and gemeinde:
             query = "SELECT * FROM gws_adressen_no_plz AS a WHERE a.strasse = \'%s\' AND a.hausnummer = \'%s\' AND a.gemeinde LIKE \'%s%%\'" % (strasse, hausnummer, gemeinde)
-            x = connection._execute(None, query)
-            data = connection._fetchall(x)
+            try:
+                x = connection._execute(None, query)
+                data = connection._fetchall(x)
+            except:
+                data = False
+                iface.messageBar().pushCritical('Datenbank Fehler!', 'Das Datenbankschema verfügt nicht über die benötigten Views.')
             if data:
                 x = data[0][5]
                 y = data[0][6]
