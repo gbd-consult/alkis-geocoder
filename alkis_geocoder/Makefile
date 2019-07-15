@@ -112,7 +112,7 @@ test: compile transcompile
 	@echo "e.g. source run-env-linux.sh <path to qgis install>; make test"
 	@echo "----------------------"
 
-deploy: compile doc transcompile
+deploy: compile transcompile
 	@echo
 	@echo "------------------------------------------"
 	@echo "Deploying plugin to your .qgis2 directory."
@@ -209,13 +209,6 @@ clean:
 	@echo "Removing uic and rcc generated files"
 	@echo "------------------------------------"
 	rm $(COMPILED_UI_FILES) $(COMPILED_RESOURCE_FILES)
-
-doc:
-	@echo
-	@echo "------------------------------------"
-	@echo "Building documentation using sphinx."
-	@echo "------------------------------------"
-	cd help; make html
 
 pylint:
 	@echo
