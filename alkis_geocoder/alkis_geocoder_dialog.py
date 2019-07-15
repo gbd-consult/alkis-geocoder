@@ -44,6 +44,8 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+        with open(os.path.join(os.path.dirname(__file__), 'help.html')) as html:
+            self.textBrowser.setHtml(html.read())
 
         # initialize the DB connection combobox
         self.qgsSettings = QSettings()

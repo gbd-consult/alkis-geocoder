@@ -71,7 +71,7 @@ QGISDIR=.local/share/QGIS/QGIS3/profiles/default/
 # Normally you would not need to edit below here
 #################################################
 
-HELP = help/build/html
+HELP = help.html
 
 PLUGIN_UPLOAD = $(c)/plugin_upload.py
 
@@ -126,7 +126,7 @@ deploy: compile doc transcompile
 	cp -vf $(COMPILED_RESOURCE_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	cp -vf $(EXTRAS) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	cp -vfr i18n $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	cp -vfr $(HELP) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/help
+	cp -vfr $(HELP) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/$(HELP)
 	# Copy extra directories if any
 	#(foreach EXTRA_DIR,(EXTRA_DIRS), cp -R (EXTRA_DIR) (HOME)/(QGISDIR)/python/plugins/(PLUGINNAME)/;)
 
