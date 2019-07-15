@@ -60,7 +60,7 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         # only show delimitedtext layers
         excepted = []
         for layer in QgsProject.instance().mapLayers().values():
-            if hasattr(layer, 'providerType') and layer.providerType() != 'delimitedtext':
+            if layer.geometryType() != 4:
                 excepted.append(layer)
         self.tableLayer.setExceptedLayerList(excepted)
 
@@ -73,7 +73,7 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
 
     def onLayerAdd(self, layer):
         """ gets run, when a layer gets added to the Qgis Project."""
-        if hasattr(layer, 'providerType') and layer.providerType() != 'delimitedtext':
+        if layer.geometryType() != 4:
             excepted = self.tableLayer.exceptedLayerList()
             excepted.append(layer)
             self.tableLayer.setExceptedLayerList(excepted)
