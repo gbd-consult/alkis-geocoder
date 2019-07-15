@@ -156,7 +156,7 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         # create new memory layer
         layer = self.tableLayer.currentLayer()
         features = [f for f in layer.getFeatures()]
-        mem_layer = QgsVectorLayer("Point?crs=epsg:25832", "geocoded_layer", "memory")
+        mem_layer = QgsVectorLayer('Point?crs=epsg:25832', '%s_geocoded' % layer.name(), 'memory')
         mem_layer_data = mem_layer.dataProvider()
         attr = layer.dataProvider().fields().toList()
         mem_layer_data.addAttributes(attr + [QgsField('lat', QVariant.Double), QgsField('lon', QVariant.Double)])
