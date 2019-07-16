@@ -57,7 +57,6 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         if not (self.tableLayer.currentLayer() and self.dbComboBox.currentText()):
             self.generateLayerButton.setEnabled(False)
 
-        self.onLayerChange(self.tableLayer.currentLayer())
 
         # only show delimitedtext layers
         excepted = []
@@ -68,7 +67,11 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
                 excepted.append(layer)
         self.tableLayer.setExceptedLayerList(excepted)
 
+        self.onLayerChange(self.tableLayer.currentLayer())
         self.tableLayer.layerChanged.connect(self.onLayerChange)
+        iface.currentLayerChanged.connect(self.onLayerChange)
+
+
         self.dbComboBox.currentTextChanged.connect(self.onDbChange)
         self.generateLayerButton.clicked.connect(self.generateLayer)
 
@@ -143,12 +146,8 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         gemeinde = removeSpace(feature[self.cityField.currentField()])
         if strasse and hausnummer and gemeinde:
             query = "SELECT * FROM gws_adressen_no_plz AS a WHERE a.strasse = \'%s\' AND a.hausnummer = \'%s\' AND a.gemeinde LIKE \'%s%%\'" % (strasse, hausnummer, gemeinde)
-            try:
-                x = connection._execute(None, query)
-                data = connection._fetchall(x)
-            except:
-                data = False
-                iface.messageBar().pushCritical('Datenbank Fehler!', 'Das Datenbankschema verfügt nicht über die benötigten Views.')
+            x = connection._execute(None, query)
+            data = connection._fetchall(x)
             if data:
                 x = data[0][5]
                 y = data[0][6]
@@ -162,7 +161,13 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         """ The main function, that does all the geocoding work. """
         try:
             connection = self.getConnection()
+            query = "SELECT * FROM gws_adressen_no_plz LIMIT 1"
+            x = connection._execute(None, query)
+            data = connection._fetchall(x)
+            if not data:
+                iface.messageBar().pushCritical('Datenbank Fehler!', 'Das Datenbankschema verfügt nicht über die benötigten Views.')
         except:
+            iface.messageBar().pushCritical('Datenbank Fehler!', 'Das Datenbankschema verfügt nicht über die benötigten Views.')
             return False
 
         # create new memory layer
