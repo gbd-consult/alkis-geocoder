@@ -54,9 +54,6 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         self.qgsSettings.endGroup()
         self.dbComboBox.addItems(connections)
 
-        if not (self.tableLayer.currentLayer() and self.dbComboBox.currentText()):
-            self.generateLayerButton.setEnabled(False)
-
 
         # only show delimitedtext layers
         excepted = []
@@ -69,11 +66,15 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
 
         self.onLayerChange(self.tableLayer.currentLayer())
         self.tableLayer.layerChanged.connect(self.onLayerChange)
-        iface.currentLayerChanged.connect(self.onLayerChange)
 
 
         self.dbComboBox.currentTextChanged.connect(self.onDbChange)
         self.generateLayerButton.clicked.connect(self.generateLayer)
+
+        if not (self.tableLayer.currentLayer() and self.dbComboBox.currentText()):
+            self.generateLayerButton.setEnabled(False)
+        if not self.tableLayer.currentLayer():
+            self.attributeBox.setEnabled(False)
 
         QgsProject.instance().layerWasAdded.connect(self.onLayerAdd)
 
@@ -100,6 +101,8 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         """ gets run, when the active layer of the QgsMapLayerCombobox changes."""
         if self.tableLayer.currentLayer() and self.dbComboBox.currentText():
             self.generateLayerButton.setEnabled(True)
+        if self.tableLayer.currentLayer():
+            self.attributeBox.setEnabled(True)
 
         self.streetField.setLayer(layer)
         self.numberField.setLayer(layer)

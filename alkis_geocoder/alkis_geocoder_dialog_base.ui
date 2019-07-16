@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>518</width>
+    <width>551</width>
     <height>383</height>
    </rect>
   </property>
@@ -52,7 +52,7 @@
          <widget class="QgsMapLayerComboBox" name="tableLayer"/>
         </item>
         <item>
-         <widget class="QGroupBox" name="groupBox_3">
+         <widget class="QGroupBox" name="attributeBox">
           <property name="title">
            <string>Attributspalten</string>
           </property>
