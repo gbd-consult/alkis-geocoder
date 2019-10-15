@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>551</width>
-    <height>383</height>
+    <height>416</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,18 +19,18 @@
      <item>
       <widget class="QGroupBox" name="groupBox">
        <property name="title">
-        <string>ALKIS Datenbank</string>
+        <string>GBD Websuite</string>
        </property>
        <layout class="QFormLayout" name="formLayout_2">
-        <item row="0" column="0">
+        <item row="1" column="0">
          <widget class="QLabel" name="label">
           <property name="text">
-           <string>Verbindung</string>
+           <string>Host</string>
           </property>
          </widget>
         </item>
-        <item row="0" column="1">
-         <widget class="QComboBox" name="dbComboBox"/>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="hostnameLineEdit"/>
         </item>
        </layout>
       </widget>
@@ -58,34 +58,34 @@
           </property>
           <layout class="QFormLayout" name="formLayout">
            <item row="0" column="0">
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>Gemarkung</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QgsFieldComboBox" name="gemarkungField"/>
+           </item>
+           <item row="1" column="0">
             <widget class="QLabel" name="label_3">
              <property name="text">
               <string>Straße</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
-            <widget class="QgsFieldComboBox" name="streetField"/>
+           <item row="1" column="1">
+            <widget class="QgsFieldComboBox" name="strasseField"/>
            </item>
-           <item row="1" column="0">
+           <item row="2" column="0">
             <widget class="QLabel" name="label_4">
              <property name="text">
               <string>Hausnummer</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="1">
-            <widget class="QgsFieldComboBox" name="numberField"/>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_6">
-             <property name="text">
-              <string>Ort</string>
-             </property>
-            </widget>
-           </item>
            <item row="2" column="1">
-            <widget class="QgsFieldComboBox" name="cityField"/>
+            <widget class="QgsFieldComboBox" name="hausnummerField"/>
            </item>
           </layout>
          </widget>

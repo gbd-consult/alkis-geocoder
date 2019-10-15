@@ -27,7 +27,7 @@ from qgis.utils import iface
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtCore import QSettings, QVariant
 from qgis.core import QgsDataSourceUri, QgsField, QgsProject, QgsVectorLayer, QgsGeometry, QgsPointXY
-import db_manager.db_plugins.postgis.connector as con
+import requests as r
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -44,36 +44,32 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+
+        # Populate hostname
+        if os.path.isfile(os.path.join(os.path.dirname(__file__), 'hostname')):
+            with open(os.path.join(os.path.dirname(__file__), 'hostname')) as f:
+                self.hostnameLineEdit.insert(f.read())
+
+        # Populate help window
         with open(os.path.join(os.path.dirname(__file__), 'help.html')) as html:
             self.textBrowser.setHtml(html.read())
 
-        # initialize the DB connection combobox
-        self.qgsSettings = QSettings()
-        self.qgsSettings.beginGroup('/PostgreSQL/connections/')
-        connections = self.qgsSettings.childGroups()
-        self.qgsSettings.endGroup()
-        self.dbComboBox.addItems(connections)
-
-
-        # only show delimitedtext layers
+        # Only show delimitedtext layers
         excepted = []
         for layer in QgsProject.instance().mapLayers().values():
             if hasattr(layer, 'providerType') and layer.providerType() not in ('delimitedtext', 'ogr'):
                 excepted.append(layer)
             elif layer.geometryType() != 4:
                 excepted.append(layer)
-        self.tableLayer.setExceptedLayerList(excepted)
-
+        self.tableLayer.setExceptedLayerList(excepted) 
         self.onLayerChange(self.tableLayer.currentLayer())
         self.tableLayer.layerChanged.connect(self.onLayerChange)
 
 
-        self.dbComboBox.currentTextChanged.connect(self.onDbChange)
         self.generateLayerButton.clicked.connect(self.generateLayer)
 
-        if not (self.tableLayer.currentLayer() and self.dbComboBox.currentText()):
-            self.generateLayerButton.setEnabled(False)
         if not self.tableLayer.currentLayer():
+            self.generateLayerButton.setEnabled(False)
             self.attributeBox.setEnabled(False)
 
         QgsProject.instance().layerWasAdded.connect(self.onLayerAdd)
@@ -91,86 +87,37 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         self.tableLayer.setExceptedLayerList(excepted)
 
 
-    def onDbChange(self):
-        """ gets run when the active database connection in the QCombobox changes."""
-        if self.tableLayer.currentLayer() and self.dbComboBox.currentText():
-            self.generateLayerButton.setEnabled(True)
-
-
     def onLayerChange(self,layer):
         """ gets run, when the active layer of the QgsMapLayerCombobox changes."""
-        if self.tableLayer.currentLayer() and self.dbComboBox.currentText():
-            self.generateLayerButton.setEnabled(True)
         if self.tableLayer.currentLayer():
+            self.generateLayerButton.setEnabled(True)
             self.attributeBox.setEnabled(True)
 
-        self.streetField.setLayer(layer)
-        self.numberField.setLayer(layer)
-        self.cityField.setLayer(layer)
+        self.strasseField.setLayer(layer)
+        self.hausnummerField.setLayer(layer)
+        self.gemarkungField.setLayer(layer)
 
-
-    def getConnection(self):
-        """ establishes a DB connection. """
-        conName = self.dbComboBox.currentText()
-        self.qgsSettings.beginGroup('/PostgreSQL/connections/')
-        userName = self.qgsSettings.value('/%s/username/' % conName)
-        host = self.qgsSettings.value('/%s/host/' % conName)
-        port = self.qgsSettings.value('/%s/port/' % conName)
-        password = self.qgsSettings.value('/%s/password/' % conName)
-        database = self.qgsSettings.value('/%s/database/' % conName)
-        self.qgsSettings.endGroup()
-        uri = QgsDataSourceUri()
-        uri.setConnection(host, port, database, userName, password)
-        c = con.PostGisDBConnector(uri)
-        return(c)
-
-
-    def geocode(self, connection, feature):
-        """ geocodes a QgsFeature.
-        Args:
-            connection (PostGisDBConnector): Connection to postgis db.
-            feature (QgsFeature): feature being geocodes.
-        """
-        def removeSpace(qv):
-            try:
-                # pythons upper() function replaces 'ß' with 'SS'. This means we don't need to replace 'ß' here.
-                res = str(qv).strip().upper().replace('Ä','AE').replace('Ü','UE').replace('Ö','OE').replace('-','').replace(' ','')
-                if res.endswith('STR.'):
-                    res = res.replace('STR.','STRASSE')
-                if res == 'NULL':
-                    return False
-                else:
-                    return res
-            except:
-                return False
-
-        strasse = removeSpace(feature[self.streetField.currentField()])
-        hausnummer = removeSpace(feature[self.numberField.currentField()])
-        gemeinde = removeSpace(feature[self.cityField.currentField()])
-        if strasse and hausnummer and gemeinde:
-            query = "SELECT * FROM gws_adressen_no_plz AS a WHERE a.strasse = \'%s\' AND a.hausnummer = \'%s\' AND a.gemeinde LIKE \'%s%%\'" % (strasse, hausnummer, gemeinde)
-            x = connection._execute(None, query)
-            data = connection._fetchall(x)
-            if data:
-                x = data[0][5]
-                y = data[0][6]
-                feature.setAttribute('lat', x)
-                feature.setAttribute('lon', y)
-                geom = QgsPointXY(x, y)
-                feature.setGeometry(QgsGeometry.fromPointXY(geom))
 
 
     def generateLayer(self):
         """ The main function, that does all the geocoding work. """
         try:
-            connection = self.getConnection()
-            query = "SELECT * FROM gws_adressen_no_plz LIMIT 1"
-            x = connection._execute(None, query)
-            data = connection._fetchall(x)
-            if not data:
-                iface.messageBar().pushCritical('Datenbank Fehler!', 'Das Datenbankschema verfügt nicht über die benötigten Views.')
+            hostname = self.hostnameLineEdit.text()
+            # FIXME: We need a better test for connectivity.
+            with open(os.path.join(os.path.dirname(__file__), 'hostname'), 'w') as f:
+                f.write(hostname)
+
+            response = r.post(hostname, json={
+                "cmd": "alkisGeocoder",
+                    "params": {
+                        "gemarkung": "Breidenbach",
+                        "strasse": "Buchenstraße",
+                        "hausnummer": "1",
+                        "crs": "EPSG:25832" 
+                    }
+            })
         except:
-            iface.messageBar().pushCritical('Datenbank Fehler!', 'Das Datenbankschema verfügt nicht über die benötigten Views.')
+            iface.messageBar().pushCritical('GWS Fehler!', 'Konnte keine Verbindung zum Server herstellen.')
             return False
 
         # create new memory layer
@@ -183,9 +130,47 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         mem_layer.updateFields()
         mem_layer_data.addFeatures(features)
         mem_layer.startEditing()
-        for f in mem_layer.getFeatures():
-            self.geocode(connection, f)
-            mem_layer.updateFeature(f)
+
+        addr_list = []
+        fid_list = []
+        for feature in mem_layer.getFeatures():
+            gemarkung = feature[self.gemarkungField.currentField()]
+            strasse = feature[self.strasseField.currentField()]
+            hausnummer = feature[self.hausnummerField.currentField()]
+            if gemarkung and strasse and hausnummer:
+                addr_list.append({ 
+                    'gemarkung' : gemarkung,
+                    'strasse' : strasse,
+                    'hausnummer' : hausnummer
+                })
+                fid_list.append(feature.id())
+                addr_list.append({
+                    'gemeinde' : gemarkung,
+                    'strasse' : strasse,
+                    'hausnummer' : hausnummer
+
+                })
+                fid_list.append(feature.id())
+
+        response = r.post(hostname, json={
+            "cmd": "alkisGeocoder",
+            "params": {
+                "crs": "EPSG:25832",
+                "adressen": addr_list
+            }
+        })
+
+        for (fid,coords) in zip(fid_list, response.json().get('coordinates')):
+            if coords:
+                feature = mem_layer.getFeature(fid)
+                x = coords[0]
+                y = coords[1]
+                feature.setAttribute('lat', x)
+                feature.setAttribute('lon', y)
+                geom = QgsPointXY(x, y)
+                feature.setGeometry(QgsGeometry.fromPointXY(geom))
+                mem_layer.updateFeature(feature)
+
         geom_features = len(list(filter(lambda x: x.hasGeometry(),[f for f in mem_layer.getFeatures()])))
         if geom_features > 0:
             iface.messageBar().pushSuccess('Geocodierung abgeschlossen', '%s von %s Features konnten geocodiert werden' % (geom_features, layer.featureCount()))
