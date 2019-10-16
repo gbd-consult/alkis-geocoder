@@ -106,16 +106,19 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
             # FIXME: We need a better test for connectivity.
             with open(os.path.join(os.path.dirname(__file__), 'hostname'), 'w') as f:
                 f.write(hostname)
-
+            # try to authenticate with GWS
+            username = self.userLineEdit.text()
+            password = self.passwordLineEdit.text()
             response = r.post(hostname, json={
-                "cmd": "alkisGeocoder",
-                    "params": {
-                        "gemarkung": "Breidenbach",
-                        "strasse": "Buchenstraße",
-                        "hausnummer": "1",
-                        "crs": "EPSG:25832" 
-                    }
+                'cmd': 'authLogin',
+                'params': {
+                    'username': username,
+                    'password': password
+                }
             })
+            if response.status_code != 200:
+                iface.messageBar().pushCritical('Authentifizierung fehlgeschlagen', 'Falsche Logindaten!')
+                return False
         except:
             iface.messageBar().pushCritical('GWS Fehler!', 'Konnte keine Verbindung zum Server herstellen.')
             return False
