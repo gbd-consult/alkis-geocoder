@@ -24,8 +24,9 @@
 
 import os
 from qgis.utils import iface
-from PyQt5 import uic, QtWidgets
-from PyQt5.QtCore import QSettings, QVariant
+from PyQt5 import uic
+from PyQt5.QtWidgets import QApplication, QDialog
+from PyQt5.QtCore import QSettings, QVariant, Qt
 from qgis.core import QgsDataSourceUri, QgsField, QgsProject, QgsVectorLayer, QgsGeometry, QgsPointXY
 import requests as r
 
@@ -34,7 +35,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'alkis_geocoder_dialog_base.ui'))
 
 
-class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
+class AlkisGeocoderDialog(QDialog, FORM_CLASS):
     def __init__(self, parent=None):
         """Constructor."""
         super(AlkisGeocoderDialog, self).__init__(parent)
@@ -68,11 +69,20 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
 
         self.generateLayerButton.clicked.connect(self.generateLayer)
 
+        self.generateLayerButton.setEnabled(False)
+
         if not self.tableLayer.currentLayer():
-            self.generateLayerButton.setEnabled(False)
             self.attributeBox.setEnabled(False)
 
+
         QgsProject.instance().layerWasAdded.connect(self.onLayerAdd)
+
+        self.hostnameLineEdit.textEdited.connect(lambda x: self.checkInputFields())
+        self.passwordLineEdit.textEdited.connect(lambda x: self.checkInputFields())
+        self.userLineEdit.textEdited.connect(lambda x: self.checkInputFields())
+        self.hausnummerField.fieldChanged.connect(lambda x: self.checkInputFields())
+        self.strasseField.fieldChanged.connect(lambda x: self.checkInputFields())
+        self.gemarkungField.fieldChanged.connect(lambda x: self.checkInputFields())
 
 
     def onLayerAdd(self, layer):
@@ -86,7 +96,19 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
 
         self.tableLayer.setExceptedLayerList(excepted)
 
+    
+    def checkInputFields(self):
+        """ Checks all required input fields of the form. """
+        if not (self.hostnameLineEdit.text() and self.userLineEdit.text() \
+                and self.passwordLineEdit.text() and self.tableLayer.currentLayer() \
+                and self.strasseField.currentField() and self.gemarkungField.currentField() \
+                and self.hausnummerField.currentField()):
+            self.generateLayerButton.setEnabled(False)
+        else:
+            self.generateLayerButton.setEnabled(True)
 
+
+            
     def onLayerChange(self,layer):
         """ gets run, when the active layer of the QgsMapLayerCombobox changes."""
         if self.tableLayer.currentLayer():
@@ -97,10 +119,17 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         self.hausnummerField.setLayer(layer)
         self.gemarkungField.setLayer(layer)
 
+        self.checkInputFields()
+
 
 
     def generateLayer(self):
         """ The main function, that does all the geocoding work. """
+
+        # disable the Button while generating
+        self.generateLayerButton.setEnabled(False) 
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
         try:
             hostname = self.hostnameLineEdit.text()
             # FIXME: We need a better test for connectivity.
@@ -120,6 +149,8 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
                 iface.messageBar().pushCritical('Authentifizierung fehlgeschlagen', 'Falsche Logindaten!')
                 return False
         except:
+            self.generateLayerButton.setEnabled(True)
+            QApplication.restoreOverrideCursor()
             iface.messageBar().pushCritical('GWS Fehler!', 'Konnte keine Verbindung zum Server herstellen.')
             return False
 
@@ -182,3 +213,6 @@ class AlkisGeocoderDialog(QtWidgets.QDialog, FORM_CLASS):
         mem_layer.commitChanges()
 
         QgsProject.instance().addMapLayer(mem_layer)
+
+        self.generateLayerButton.setEnabled(True)
+        QApplication.restoreOverrideCursor()
