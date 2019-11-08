@@ -146,7 +146,7 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
                 iface.messageBar().pushCritical('Authentifizierung fehlgeschlagen', 'Falsche Logindaten!')
                 return False
         except:
-            self.generateLayerButton.setEnabled(True)
+            self.setEnabled(True)
             QApplication.restoreOverrideCursor()
             iface.messageBar().pushCritical('GWS Fehler!', 'Konnte keine Verbindung zum Server herstellen.')
             return False
