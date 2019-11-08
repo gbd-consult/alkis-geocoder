@@ -26,7 +26,7 @@ import os
 from qgis.utils import iface
 from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QDialog
-from PyQt5.QtCore import QSettings, QVariant, Qt
+from PyQt5.QtCore import QSettings, QVariant, Qt, QCoreApplication
 from qgis.core import QgsDataSourceUri, QgsField, QgsProject, QgsVectorLayer, QgsGeometry, QgsPointXY
 import requests as r
 
@@ -56,13 +56,8 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
             self.textBrowser.setHtml(html.read())
 
         # Only show delimitedtext layers
-        excepted = []
-        for layer in QgsProject.instance().mapLayers().values():
-            if hasattr(layer, 'providerType') and layer.providerType() not in ('delimitedtext', 'ogr'):
-                excepted.append(layer)
-            elif layer.geometryType() != 4:
-                excepted.append(layer)
-        self.tableLayer.setExceptedLayerList(excepted) 
+        self.setLayerExceptions()
+
         self.onLayerChange(self.tableLayer.currentLayer())
         self.tableLayer.layerChanged.connect(self.onLayerChange)
 
@@ -75,7 +70,8 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
             self.attributeBox.setEnabled(False)
 
 
-        QgsProject.instance().layerWasAdded.connect(self.onLayerAdd)
+        QgsProject.instance().layerWasAdded.connect(lambda x: self.setLayerExceptions())
+        QgsProject.instance().layerRemoved.connect(lambda x:self.setLayerExceptions())
 
         self.hostnameLineEdit.textEdited.connect(lambda x: self.checkInputFields())
         self.passwordLineEdit.textEdited.connect(lambda x: self.checkInputFields())
@@ -85,16 +81,15 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
         self.gemarkungField.fieldChanged.connect(lambda x: self.checkInputFields())
 
 
-    def onLayerAdd(self, layer):
-        """ gets run, when a layer gets added to the Qgis Project."""
-        excepted = self.tableLayer.exceptedLayerList()
-
-        if hasattr(layer, 'providerType') and layer.providerType() not in ('delimitedtext', 'ogr'):
-            excepted.append(layer)
-        elif layer.geometryType() != 4:
-            excepted.append(layer)
-
-        self.tableLayer.setExceptedLayerList(excepted)
+    def setLayerExceptions(self):
+        """ only show delimeted text layers in the layer selector. """
+        excepted = []
+        for layer in QgsProject.instance().mapLayers().values():
+            if hasattr(layer, 'providerType') and layer.providerType() not in ('delimitedtext', 'ogr'):
+                excepted.append(layer)
+            elif layer.geometryType() != 4:
+                excepted.append(layer)
+        self.tableLayer.setExceptedLayerList(excepted) 
 
     
     def checkInputFields(self):
@@ -106,6 +101,7 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
             self.generateLayerButton.setEnabled(False)
         else:
             self.generateLayerButton.setEnabled(True)
+            print(self.generateLayerButton.isEnabled())
 
 
             
@@ -127,8 +123,9 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
         """ The main function, that does all the geocoding work. """
 
         # disable the Button while generating
-        self.generateLayerButton.setEnabled(False) 
+        self.setEnabled(False)
         QApplication.setOverrideCursor(Qt.WaitCursor)
+        QCoreApplication.processEvents()
 
         try:
             hostname = self.hostnameLineEdit.text()
@@ -208,11 +205,12 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
         geom_features = len(list(filter(lambda x: x.hasGeometry(),[f for f in mem_layer.getFeatures()])))
         if geom_features > 0:
             iface.messageBar().pushSuccess('Geocodierung abgeschlossen', '%s von %s Features konnten geocodiert werden' % (geom_features, layer.featureCount()))
+            mem_layer.commitChanges()
+            QgsProject.instance().addMapLayer(mem_layer)
         else:
+            del(mem_layer)
             iface.messageBar().pushCritical('Geocodierung fehlgeschlagen', 'Es konnten keine Features geocodiert werden.')
-        mem_layer.commitChanges()
 
-        QgsProject.instance().addMapLayer(mem_layer)
 
-        self.generateLayerButton.setEnabled(True)
+        self.setEnabled(True)
         QApplication.restoreOverrideCursor()

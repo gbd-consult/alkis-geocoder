@@ -175,6 +175,18 @@
    <header>qgspasswordlineedit.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>hostnameLineEdit</tabstop>
+  <tabstop>userLineEdit</tabstop>
+  <tabstop>passwordLineEdit</tabstop>
+  <tabstop>tableLayer</tabstop>
+  <tabstop>gemarkungField</tabstop>
+  <tabstop>strasseField</tabstop>
+  <tabstop>hausnummerField</tabstop>
+  <tabstop>generateLayerButton</tabstop>
+  <tabstop>cancelButton</tabstop>
+  <tabstop>textBrowser</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
