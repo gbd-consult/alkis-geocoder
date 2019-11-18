@@ -101,7 +101,6 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
             self.generateLayerButton.setEnabled(False)
         else:
             self.generateLayerButton.setEnabled(True)
-            print(self.generateLayerButton.isEnabled())
 
 
             
@@ -172,13 +171,13 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
                 addr_list.append({ 
                     'gemarkung' : gemarkung,
                     'strasse' : strasse,
-                    'hausnummer' : hausnummer
+                    'hausnummer' : str(hausnummer)
                 })
                 fid_list.append(feature.id())
                 addr_list.append({
                     'gemeinde' : gemarkung,
                     'strasse' : strasse,
-                    'hausnummer' : hausnummer
+                    'hausnummer' : str(hausnummer)
 
                 })
                 fid_list.append(feature.id())
@@ -190,7 +189,6 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
                 "adressen": addr_list
             }
         })
-
         for (fid,coords) in zip(fid_list, response.json().get('coordinates')):
             if coords:
                 feature = mem_layer.getFeature(fid)
