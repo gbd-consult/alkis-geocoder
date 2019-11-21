@@ -7,7 +7,7 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=GWS ALKIS Geocoder
+name=GBD ALKIS Geocoder
 description=Geokodierung von Adresstabellen mittels GBD WebSuite und ALKIS Datenbank
 category=Vector
 qgisMinimumVersion=3.0
