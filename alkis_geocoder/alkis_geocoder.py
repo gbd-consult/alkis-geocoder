@@ -63,7 +63,7 @@ class AlkisGeocoder:
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&GWS ALKIS Geocoder')
+        self.menu = self.tr(u'&GBD ALKIS Geocoder')
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
@@ -165,7 +165,7 @@ class AlkisGeocoder:
         icon_path = ':/plugins/alkis_geocoder/icon.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'GWS ALKIS Geocoder'),
+            text=self.tr(u'GBD ALKIS Geocoder'),
             callback=self.run,
             parent=self.iface.mainWindow())
 
@@ -177,7 +177,7 @@ class AlkisGeocoder:
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
             self.iface.removePluginMenu(
-                self.tr(u'&GWS ALKIS Geocoder'),
+                self.tr(u'&GBD ALKIS Geocoder'),
                 action)
             self.iface.removeToolBarIcon(action)
 
