@@ -143,6 +143,8 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
             })
             if response.status_code != 200:
                 iface.messageBar().pushCritical('Authentifizierung fehlgeschlagen', 'Falsche Logindaten!')
+                self.setEnabled(True)
+                QApplication.restoreOverrideCursor()
                 return False
         except:
             self.setEnabled(True)
@@ -183,13 +185,20 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
                 fid_list.append(feature.id())
 
         response = r.post(hostname, json={
-            "cmd": "alkisGeocoder",
+            "cmd": "alkisgeocoderDecode",
             "params": {
                 "crs": "EPSG:25832",
                 "adressen": addr_list
             }
         })
-        for (fid,coords) in zip(fid_list, response.json().get('coordinates')):
+        coordinates = response.json().get('coordinates')
+        if not coordinates:
+            iface.messageBar().pushCritical('GWS Fehler!', 'GWS unterstützt kein AlkisGeocoder!')
+            self.setEnabled(True)
+            QApplication.restoreOverrideCursor()
+            return False
+
+        for (fid,coords) in zip(fid_list, coordinates):
             if coords:
                 feature = mem_layer.getFeature(fid)
                 x = coords[0]
