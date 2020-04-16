@@ -55,6 +55,11 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
         with open(os.path.join(os.path.dirname(__file__), 'help.html')) as html:
             self.textBrowser.setHtml(html.read())
 
+        self.authRequired = False
+        self.hostname = None
+        self.cookie = None
+        self.authBox.setEnabled(False)
+
         # Only show delimitedtext layers
         self.setLayerExceptions()
 
@@ -70,8 +75,12 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
             self.attributeBox.setEnabled(False)
 
 
+
         QgsProject.instance().layerWasAdded.connect(lambda x: self.setLayerExceptions())
         QgsProject.instance().layerRemoved.connect(lambda x:self.setLayerExceptions())
+
+        self.hostnameLineEdit.textEdited.connect(self.checkHostname)
+        self.loginButton.clicked.connect(self.checkAuth)
 
         self.hostnameLineEdit.textEdited.connect(lambda x: self.checkInputFields())
         self.passwordLineEdit.textEdited.connect(lambda x: self.checkInputFields())
@@ -89,21 +98,77 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
                 excepted.append(layer)
             elif layer.geometryType() != 4:
                 excepted.append(layer)
-        self.tableLayer.setExceptedLayerList(excepted) 
+        self.tableLayer.setExceptedLayerList(excepted)
 
-    
+
+    def checkHostname(self, hostname):
+        """ Checks if the hostname is valid and whether it requires authentification. """
+        if not hostname:
+            self.hostname = None
+        else:
+            if len(hostname.split('.')) > 1:
+                if not hostname.startswith("http"):
+                    hostname = "https://" + hostname
+                try:
+                    response = r.post(hostname, json={
+                        "cmd": "alkisgeocoderDecode",
+                        "params": {
+                            "crs": "EPSG:25832",
+                            "adressen": [{
+                                "gemeinde" : "Musterstadt",
+                                "strasse" : "Hauptstraße",
+                                "hausnummer" : "1"
+                            }]
+                        }
+                    })
+                    if response.status_code == 403:
+                        self.authRequired = True
+                        self.authBox.setEnabled(True)
+                        self.hostname = hostname
+                    if response.json().get('coordinates'):
+                        self.hostname = hostname
+                except:
+                    self.hostname = None
+
+
+    def checkAuth(self):
+        """ Authenticate to the GWS Server. """
+        # v5 Auth
+        try:
+            hostname = self.hostname
+            username = self.userLineEdit.text()
+            password = self.passwordLineEdit.text()
+            response = r.post(hostname, json={
+                'cmd': 'authLogin',
+                'params': {
+                    'username': username,
+                    'password': password
+                }
+            })
+            if response.status_code != 200:
+                iface.messageBar().pushCritical('Authentifizierung fehlgeschlagen', 'Falsche Logindaten!')
+            else:
+                self.cookie = response.cookie
+        except:
+            iface.messageBar().pushCritical('GWS Fehler!', 'Konnte keine Verbindung zum Server herstellen.')
+
+
+
     def checkInputFields(self):
         """ Checks all required input fields of the form. """
-        if not (self.hostnameLineEdit.text() and self.userLineEdit.text() \
-                and self.passwordLineEdit.text() and self.tableLayer.currentLayer() \
-                and self.strasseField.currentField() and self.gemarkungField.currentField() \
-                and self.hausnummerField.currentField()):
-            self.generateLayerButton.setEnabled(False)
+        if (self.hostname and self.authRequired and self.cookie) \
+            or (self.hostname and not self.authRequired):
+            if self.tableLayer.currentLayer() \
+                and self.strasseField.currentField() \
+                and self.gemarkungField.currentField() \
+                and self.hausnummerField.currentField():
+                self.generateLayerButton.setEnabled(True)
+            else:
+                self.generateLayerButton.setEnabled(False)
         else:
-            self.generateLayerButton.setEnabled(True)
+            self.generateLayerButton.setEnabled(False)
 
 
-            
     def onLayerChange(self,layer):
         """ gets run, when the active layer of the QgsMapLayerCombobox changes."""
         if self.tableLayer.currentLayer():
@@ -126,32 +191,6 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         QCoreApplication.processEvents()
 
-        try:
-            hostname = self.hostnameLineEdit.text()
-            # FIXME: We need a better test for connectivity.
-            with open(os.path.join(os.path.dirname(__file__), 'hostname'), 'w') as f:
-                f.write(hostname)
-            # try to authenticate with GWS
-            username = self.userLineEdit.text()
-            password = self.passwordLineEdit.text()
-            response = r.post(hostname, json={
-                'cmd': 'authLogin',
-                'params': {
-                    'username': username,
-                    'password': password
-                }
-            })
-            if response.status_code != 200:
-                iface.messageBar().pushCritical('Authentifizierung fehlgeschlagen', 'Falsche Logindaten!')
-                self.setEnabled(True)
-                QApplication.restoreOverrideCursor()
-                return False
-        except:
-            self.setEnabled(True)
-            QApplication.restoreOverrideCursor()
-            iface.messageBar().pushCritical('GWS Fehler!', 'Konnte keine Verbindung zum Server herstellen.')
-            return False
-
         # create new memory layer
         layer = self.tableLayer.currentLayer()
         features = [f for f in layer.getFeatures()]
@@ -170,7 +209,7 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
             strasse = feature[self.strasseField.currentField()]
             hausnummer = feature[self.hausnummerField.currentField()]
             if gemarkung and strasse and hausnummer:
-                addr_list.append({ 
+                addr_list.append({
                     'gemarkung' : gemarkung,
                     'strasse' : strasse,
                     'hausnummer' : str(hausnummer)
@@ -184,13 +223,25 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
                 })
                 fid_list.append(feature.id())
 
-        response = r.post(hostname, json={
-            "cmd": "alkisgeocoderDecode",
-            "params": {
-                "crs": "EPSG:25832",
-                "adressen": addr_list
-            }
-        })
+        # v5 auth
+        if (self.hostname and self.authRequired and self.cookie):
+            response = r.post(self.hostname, cookies = self.cookie, json={
+                "cmd": "alkisgeocoderDecode",
+                "params": {
+                    "crs": "EPSG:25832",
+                    "adressen": addr_list
+                }
+            })
+        # no auth
+        else:
+            response = r.post(hostname, json={
+                "cmd": "alkisgeocoderDecode",
+                "params": {
+                    "crs": "EPSG:25832",
+                    "adressen": addr_list
+                }
+            })
+
         coordinates = response.json().get('coordinates')
         if not coordinates:
             iface.messageBar().pushCritical('GWS Fehler!', 'GWS unterstützt kein AlkisGeocoder!')
