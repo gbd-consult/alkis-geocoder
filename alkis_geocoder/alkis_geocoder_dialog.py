@@ -57,7 +57,7 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
 
         self.authRequired = False
         self.hostname = None
-        self.cookie = None
+        self.cookies = None
         self.authBox.setEnabled(False)
 
         # Only show delimitedtext layers
@@ -125,7 +125,7 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
                         self.authRequired = True
                         self.authBox.setEnabled(True)
                         self.hostname = hostname
-                    if response.json().get('coordinates'):
+                    elif response.json().get('coordinates'):
                         self.hostname = hostname
                 except:
                     self.hostname = None
@@ -148,7 +148,7 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
             if response.status_code != 200:
                 iface.messageBar().pushCritical('Authentifizierung fehlgeschlagen', 'Falsche Logindaten!')
             else:
-                self.cookie = response.cookie
+                self.cookies = response.cookies
         except:
             iface.messageBar().pushCritical('GWS Fehler!', 'Konnte keine Verbindung zum Server herstellen.')
 
@@ -156,7 +156,7 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
 
     def checkInputFields(self):
         """ Checks all required input fields of the form. """
-        if (self.hostname and self.authRequired and self.cookie) \
+        if (self.hostname and self.authRequired and self.cookies) \
             or (self.hostname and not self.authRequired):
             if self.tableLayer.currentLayer() \
                 and self.strasseField.currentField() \
@@ -224,8 +224,8 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
                 fid_list.append(feature.id())
 
         # v5 auth
-        if (self.hostname and self.authRequired and self.cookie):
-            response = r.post(self.hostname, cookies = self.cookie, json={
+        if (self.hostname and self.authRequired and self.cookies):
+            response = r.post(self.hostname, cookies = self.cookies, json={
                 "cmd": "alkisgeocoderDecode",
                 "params": {
                     "crs": "EPSG:25832",
