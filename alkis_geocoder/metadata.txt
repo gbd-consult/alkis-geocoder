@@ -1,7 +1,7 @@
-# This file contains metadata for your plugin. Since 
-# version 2.0 of QGIS this is the proper way to supply 
-# information about a plugin. The old method of 
-# embedding metadata in __init__.py will 
+# This file contains metadata for your plugin. Since
+# version 2.0 of QGIS this is the proper way to supply
+# information about a plugin. The old method of
+# embedding metadata in __init__.py will
 # is no longer supported since version 2.0.
 
 # This file should be included when you package your plugin.# Mandatory items:
@@ -13,10 +13,10 @@ category=Vector
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 website=https://plugins.gbd-consult.de
-version=2.4
+version=2.5
 author=Geoinformatikbüro Dassau GmbH
 email=info@gbd-consult.de
-about=Geoinformatikbüro Dassau GmbH, Rethelstraße 153, 40237 Düsseldorf
+about=Dieses QGIS Plugin verwendet die GWS Websuite um Adresstabellen mittels ALKIS zu geocodieren. 
 # End of mandatory metadata
 
 # Optional items:
@@ -31,4 +31,3 @@ repository=https://github.com/gbd-consult/alkis-geocoder
 icon=icon.png
 experimental=False
 deprecated=False
-
