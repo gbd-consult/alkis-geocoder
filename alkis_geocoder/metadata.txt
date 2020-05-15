@@ -16,7 +16,7 @@ website=https://plugins.gbd-consult.de
 version=2.5
 author=Geoinformatikbüro Dassau GmbH
 email=info@gbd-consult.de
-about=Dieses QGIS Plugin verwendet die GWS Websuite um Adresstabellen mittels ALKIS zu geocodieren. 
+about=Dieses Plugin ermöglicht die Geokodierungen von Adressdaten (Ort, Straße und Hausnummer) auf Basis von Daten des Amtlichen Liegenschaftskatasterinformationssystems ALKIS. Voraussetzung ist, dass ein Nutzeraccount zu einer GBD WebSuite mit aktiver alkisgeocoder Schnittstelle aktiv ist und das ALKIS Modul der GBD WebSuite genutzt wird, um Liegenschaftsdaten zu verwalten, abzufragen und zur Verfügung zu stellen. 
 # End of mandatory metadata
 
 # Optional items:
