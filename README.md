@@ -9,7 +9,7 @@ So können für beliebige Adressen lat und lon Werte schnell gefunden und zugeor
 Durch eine Authentifizierung per User und Passwort, kann diese Funktion nur für verifizierte Nutzer bereitgestellt werden.
 Dazu wird eine Schnitstelle zur GBD WebSuite genutzt.
 
-## <img src="/images/.png" width="300">
+<img src="/images/geocoder_blank.png" width="300">
 
 
 Installation
@@ -24,9 +24,9 @@ Das Plugin kann über das Menü Erweiterungen -> GBD ALKIS Geocoder geladen werd
 
 Bedienung
 ---------
-## Wenn Sie den GBD ALKIS Geocoder geöffnet haben, finden Sie folgendes Fenster vor:
+Wenn Sie den GBD ALKIS Geocoder geöffnet haben, finden Sie folgendes Fenster vor:
 
-## <img src="/images/geocoder_blank.png" width="300">
+<img src="/images/geocoder_blank.png" width="300">
 
 Zuerst müssen Sie eine URL eintragen die Ihnen Zugriff auf die GBD Websuite API ermöglicht.
 ## Muss diese vorher bei uns angelegt oder angefragt werden? Woher bekommt man diese?
@@ -38,7 +38,7 @@ Jetzt müssen Sie noch die Spalten Gemarkung, Straße und Hausnummer  manuell zu
 Über den Button 'Layer generieren' starten Sie die Geokodierung.
 Nun wird ein neuer Punktlayer mit lat und lon werten generiert.
 
-## <img src="/images/geocoder_filled.png" width="300">
+<img src="/images/geocoder_filled.png" width="300">
 
 Das Plugin wurde zuletzt im April 2020 aktualisiert.
 
