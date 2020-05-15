@@ -13,7 +13,7 @@ Installation
 
 Das Plugin wird über das [Plugin Repository der Geoinformatikbüro Dassau GmbH](https://plugins.gbd-consult.de) bereitgestellt. Sie können das Repository über den QGIS Pluginmanager einbinden.
 
-<img src="/images/repodetails.png" width="300">
+<img src="/images/repodetails.png" width="500">
 
 Das Plugin kann über das Menü Erweiterungen -> GBD ALKIS Geocoder geladen werden.
 
@@ -22,7 +22,7 @@ Bedienung
 ---------
 Wenn Sie das GBD ALKIS Geocoder Plugin in QGIS geladen und geöffnet haben, finden Sie folgendes Fenster vor:
 
-<img src="/images/geocoder_blank.png" width="300">
+<img src="/images/geocoder_blank.png" width="500">
 
 Zuerst müssen Sie eine URL eintragen die Ihnen Zugriff auf die GBD Websuite API ermöglicht.
 
@@ -30,7 +30,7 @@ Wenn Sie die URL eingetragen haben, schaut das Plugin ob für diese eine Authent
 
 Jetzt weisen Sie die Spalten Gemarkung (Ort), Straße und Hausnummer manuell zu. Über den Button 'Layer generieren' starten Sie die Geokodierung. Ein neuer temporärer Punktlayer mit lat und lon werten wird erstellt und direkt in das QGIS Layerfenster geladen. Die zugewiesenen Punktkoordinaten werden in zwei neue Spalten zu den Werte der Ausgangstabelle ergänzt.
 
-<img src="/images/geocoder_filled.png" width="300">
+<img src="/images/geocoder_filled.png" width="500">
 
 ## Lizenz
 
