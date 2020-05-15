@@ -4,13 +4,9 @@ ALKIS-Geocoder
 Geokodierung von Adressdaten auf Basis von ALKIS
 ------------------------------------------------
 
-Dieses Plugin ermöglicht die Zuordnung von Geokodierungen zu Adressdaten auf Basis von ALKIS Daten.
-So können für beliebige Adressen lat und lon Werte schnell gefunden und zugeordnet werden.
-Durch eine Authentifizierung per User und Passwort, kann diese Funktion nur für verifizierte Nutzer bereitgestellt werden.
-Dazu wird eine Schnitstelle zur GBD WebSuite genutzt.
+Dieses Plugin ermöglicht die Geokodierungen von Adressdaten (Ort, Straße und Hausnummer) auf Basis von Daten des Amtlichen Liegenschaftskatasterinformationssystems [ALKIS](https://de.wikipedia.org/wiki/Amtliches_Liegenschaftskatasterinformationssystem). Voraussetzung ist, dass ein Nutzeraccount zu einer [GBD WebSuite](https://gws.gbd-consult.de) vorhanden ist, deren [alkisgeocoder Schnittstelle](https://gws.gbd-consult.de/doc/current/books/server-admin/en/actions.html) aktiv ist und das [ALKIS Modul](https://gws.gbd-consult.de/doc/current/books/client-user/de/sidebar/cadastral_unit_searching.html) genutzt wird, um Liegenschaftsdaten zu verwalten, abzufragen und zur Verfügung zu stellen. 
 
-<img src="/images/geocoder_blank.png" width="300">
-
+Liegenschaftsinformationen (ALKIS) bieten zwar nicht denselben Informationsgehalt einer Adressdatenbank. Wenn ALKIS Daten vorhanden sind, ist es denoch möglich, diese zu nutzen, um Adressdaten zu geokodieren und somit als Punkte in einer Karte zu verorten.
 
 Installation
 ------------
@@ -24,23 +20,17 @@ Das Plugin kann über das Menü Erweiterungen -> GBD ALKIS Geocoder geladen werd
 
 Bedienung
 ---------
-Wenn Sie den GBD ALKIS Geocoder geöffnet haben, finden Sie folgendes Fenster vor:
+Wenn Sie das GBD ALKIS Geocoder Plugin in QGIS geladen und geöffnet haben, finden Sie folgendes Fenster vor:
 
 <img src="/images/geocoder_blank.png" width="300">
 
 Zuerst müssen Sie eine URL eintragen die Ihnen Zugriff auf die GBD Websuite API ermöglicht.
-## Muss diese vorher bei uns angelegt oder angefragt werden? Woher bekommt man diese?
-Wenn Sie die URL eingetragen haben, schaut das Plugin ob für diese eine Authentifizierung per Benutzer und Passwort nötig ist.
-Falls ja, tragen Sie einen für diese URL verifizierten Benutzer mit Passwort ein.
-Dann muss die Auswahl einer in QGIS bereits geladenen Tabelle mit Adressdaten und korrekter Schriftkodierung erfolgen.
-## Output Daten mit Gemarkung etc. oder Input Daten mit Gemarkung etc.. Wenn zweiteres was ist dann die Geokodierung?
-Jetzt müssen Sie noch die Spalten Gemarkung, Straße und Hausnummer  manuell zuweisen.
-Über den Button 'Layer generieren' starten Sie die Geokodierung.
-Nun wird ein neuer Punktlayer mit lat und lon werten generiert.
+
+Wenn Sie die URL eingetragen haben, schaut das Plugin ob für diese eine Authentifizierung per Benutzer und Passwort nötig ist. Falls ja, tragen Sie einen für diese URL verifizierten Benutzer mit Passwort ein. Dann muss die Auswahl einer in QGIS bereits geladenen Tabelle (z.B. Excel, CSV oder OpenOffice Tabelle (.ods)) mit Adressdaten erfolgen. Ort, Straße und Hausnummer müssen in einer eigenen Spalte abgelegt sein.
+
+Jetzt weisen Sie die Spalten Gemarkung (Ort), Straße und Hausnummer manuell zu. Über den Button 'Layer generieren' starten Sie die Geokodierung. Ein neuer temporärer Punktlayer mit lat und lon werten wird erstellt und direkt in das QGIS Layerfenster geladen. Die zugewiesenen Punktkoordinaten werden in zwei neue Spalten zu den Werte der Ausgangstabelle ergänzt.
 
 <img src="/images/geocoder_filled.png" width="300">
-
-Das Plugin wurde zuletzt im April 2020 aktualisiert.
 
 ## Lizenz
 
