@@ -62,10 +62,11 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
 
-        self.authCfgSelect.selectedConfigIdChanged.connect(self.update_auth)
-
+        self.config = {}
         self.authcfg = None
         self.gws_url = None
+        self.authCfgSelect.selectedConfigIdChanged.connect(self.update_auth)
+
         self.config_path = os.path.join(
                         QgsApplication.qgisSettingsDirPath(),
                         'GBD_WebSuite',
@@ -76,7 +77,6 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
                 self.config = json.load(fp)
         elif not os.path.exists(os.path.dirname(self.config_path)):
             os.makedirs(os.path.dirname(self.config_path))
-            self.config = {}
 
         if self.config.get('authcfg'):
             self.authCfgSelect.setConfigId(self.config.get('authcfg'))
