@@ -28,7 +28,6 @@ from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QDialog
 from PyQt5.QtNetwork import QNetworkRequest
 from PyQt5.QtCore import (
-    QSettings,
     QVariant,
     Qt,
     QCoreApplication,
@@ -39,20 +38,20 @@ from qgis.core import (
     QgsApplication,
     QgsNetworkAccessManager,
     QgsAuthMethodConfig,
-    QgsDataSourceUri,
     QgsField,
     QgsProject,
     QgsVectorLayer,
     QgsGeometry,
     QgsPointXY)
-from qgis.gui import QgsAuthConfigSelect
 
-# This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
+# This loads your .ui file so that PyQt can populate your plugin with the
+# elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'alkis_geocoder_dialog_base.ui'))
 
 
 class AlkisGeocoderDialog(QDialog, FORM_CLASS):
+    """Dialog for the Alkis Geocoder Plugin."""
     def __init__(self, parent=None):
         """Constructor."""
         super(AlkisGeocoderDialog, self).__init__(parent)
@@ -63,56 +62,77 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
 
-        self.authCfgSelect.selectedConfigIdChanged.connect(self.updateAuth)
+        self.authCfgSelect.selectedConfigIdChanged.connect(self.update_auth)
 
         self.authcfg = None
         self.gws_url = None
+        self.config_path = os.path.join(
+                        QgsApplication.qgisSettingsDirPath(),
+                        'GBD_WebSuite',
+                        'gws.json')
+
+        if os.path.exists((self.config_path)):
+            with open(self.config_path, 'r') as fp:
+                self.config = json.load(fp)
+        elif not os.path.exists(os.path.dirname(self.config_path)):
+            os.makedirs(os.path.dirname(self.config_path))
+            self.config = {}
+
+        if self.config.get('authcfg'):
+            self.authCfgSelect.setConfigId(self.config.get('authcfg'))
 
         # Populate help window
-        with open(os.path.join(os.path.dirname(__file__), 'help.html')) as html:
+        with open(os.path.join(
+                os.path.dirname(__file__), 'help.html')) as html:
             self.textBrowser.setHtml(html.read())
 
         # Only show delimitedtext layers
-        self.setLayerExceptions()
+        self.set_layer_exceptions()
 
-        self.onLayerChange(self.tableLayer.currentLayer())
-        self.tableLayer.layerChanged.connect(self.onLayerChange)
+        self.on_layer_change(self.tableLayer.currentLayer())
+        self.tableLayer.layerChanged.connect(self.on_layer_change)
 
-
-        self.generateLayerButton.clicked.connect(self.generateLayer)
-
+        self.generateLayerButton.clicked.connect(self.generate_layer)
         self.generateLayerButton.setEnabled(False)
 
         if not self.tableLayer.currentLayer():
             self.attributeBox.setEnabled(False)
 
+        QgsProject.instance().layerWasAdded.connect(
+            lambda x: self.set_layer_exceptions())
+        QgsProject.instance().layerRemoved.connect(
+            lambda x: self.set_layer_exceptions())
 
+        self.hausnummerField.fieldChanged.connect(
+            lambda x: self.check_input_fields())
+        self.strasseField.fieldChanged.connect(
+            lambda x: self.check_input_fields())
+        self.gemarkungField.fieldChanged.connect(
+            lambda x: self.check_input_fields())
+        self.authCfgSelect.selectedConfigIdChanged.connect(
+            lambda x: self.check_input_fields())
 
-        QgsProject.instance().layerWasAdded.connect(lambda x: self.setLayerExceptions())
-        QgsProject.instance().layerRemoved.connect(lambda x:self.setLayerExceptions())
-
-        self.hausnummerField.fieldChanged.connect(lambda x: self.checkInputFields())
-        self.strasseField.fieldChanged.connect(lambda x: self.checkInputFields())
-        self.gemarkungField.fieldChanged.connect(lambda x: self.checkInputFields())
-        self.authCfgSelect.selectedConfigIdChanged.connect(lambda x: self.checkInputFields())
-
-
-    def updateAuth(self, authcfg):
+    def update_auth(self, authcfg):
+        """update the auth config."""
         conf = QgsAuthMethodConfig()
-        auth = QgsApplication.authManager().loadAuthenticationConfig(
+        QgsApplication.authManager().loadAuthenticationConfig(
             authcfg, conf, True)
         if conf.uri():
             self.gws_url = QUrl(conf.uri())
             self.authcfg = authcfg
+            self.config.update({
+                'authcfg': authcfg
+            })
+            with open(self.config_path, 'w') as fp:
+                json.dump(self.config, fp)
         else:
             self.gws_url = None
             self.authcfg = None
 
-
-    def geocodeAddresses(self, address_list):
+    def geocode_addresses(self, address_list):
         """Geocode a list of addresses using GWS."""
         req = QNetworkRequest(self.gws_url)
-        req.setRawHeader(QByteArray(b"Content-Type"), 
+        req.setRawHeader(QByteArray(b"Content-Type"),
                          QByteArray(b"application/json"))
         nam = QgsNetworkAccessManager.instance()
         data = QByteArray(json.dumps({
@@ -124,33 +144,31 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
         }).encode())
         return nam.blockingPost(req, data, self.authcfg)
 
-
-    def setLayerExceptions(self):
+    def set_layer_exceptions(self):
         """Show only delimeted text layers in the layer selector."""
         excepted = []
         for layer in QgsProject.instance().mapLayers().values():
-            if hasattr(layer, 'providerType') and layer.providerType() not in ('delimitedtext', 'ogr'):
+            if hasattr(layer, 'providerType') and \
+                    layer.providerType() not in ('delimitedtext', 'ogr'):
                 excepted.append(layer)
             elif layer.geometryType() != 4:
                 excepted.append(layer)
         self.tableLayer.setExceptedLayerList(excepted)
 
-
-    def checkInputFields(self):
+    def check_input_fields(self):
         """Check all required input fields of the form."""
         if self.tableLayer.currentLayer() \
-            and self.strasseField.currentField() \
-            and self.gemarkungField.currentField() \
-            and self.authcfg \
-            and self.gws_url \
-            and self.hausnummerField.currentField():
+                and self.strasseField.currentField() \
+                and self.gemarkungField.currentField() \
+                and self.authcfg \
+                and self.gws_url \
+                and self.hausnummerField.currentField():
             self.generateLayerButton.setEnabled(True)
         else:
             self.generateLayerButton.setEnabled(False)
 
-
-    def onLayerChange(self,layer):
-        """ gets run, when the active layer of the QgsMapLayerCombobox changes."""
+    def on_layer_change(self, layer):
+        """run when the active layer of the QgsMapLayerCombobox changes."""
         if self.tableLayer.currentLayer():
             self.generateLayerButton.setEnabled(True)
             self.attributeBox.setEnabled(True)
@@ -159,11 +177,9 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
         self.hausnummerField.setLayer(layer)
         self.gemarkungField.setLayer(layer)
 
-        self.checkInputFields()
+        self.check_input_fields()
 
-
-
-    def generateLayer(self):
+    def generate_layer(self):
         """ The main function, that does all the geocoding work. """
 
         # disable the Button while generating
@@ -174,10 +190,17 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
         # create new memory layer
         layer = self.tableLayer.currentLayer()
         features = [f for f in layer.getFeatures()]
-        mem_layer = QgsVectorLayer('Point?crs=epsg:25832', '%s_geocoded' % layer.name(), 'memory')
+        mem_layer = QgsVectorLayer(
+            'Point?crs=epsg:25832',
+            '{}_geocoded'.format(layer.name()),
+            'memory')
         mem_layer_data = mem_layer.dataProvider()
         attr = layer.dataProvider().fields().toList()
-        mem_layer_data.addAttributes(attr + [QgsField('lat', QVariant.Double), QgsField('lon', QVariant.Double)])
+        mem_layer_data.addAttributes(
+            attr + [
+                QgsField('lat', QVariant.Double),
+                QgsField('lon', QVariant.Double)
+                ])
         mem_layer.updateFields()
         mem_layer_data.addFeatures(features)
         mem_layer.startEditing()
@@ -190,27 +213,31 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
             hausnummer = feature[self.hausnummerField.currentField()]
             if gemarkung and strasse and hausnummer:
                 addr_list.append({
-                    'gemarkung' : gemarkung,
-                    'strasse' : strasse,
-                    'hausnummer' : str(hausnummer)
+                    'gemarkung': gemarkung,
+                    'strasse': strasse,
+                    'hausnummer': str(hausnummer)
                 })
                 fid_list.append(feature.id())
                 addr_list.append({
-                    'gemeinde' : gemarkung,
-                    'strasse' : strasse,
-                    'hausnummer' : str(hausnummer)
+                    'gemeinde': gemarkung,
+                    'strasse': strasse,
+                    'hausnummer': str(hausnummer)
 
                 })
                 fid_list.append(feature.id())
 
         # basicauth:
-        reply = self.geocodeAddresses(addr_list)
-        if reply.error() == 0: # No Error
-            coordinates = json.loads(str(reply.content(), 'utf-8')).get('coordinates')
+        reply = self.geocode_addresses(addr_list)
+        if reply.error() == 0:
+            # No Error
+            coordinates = json.loads(
+                str(reply.content(), 'utf-8')).get('coordinates')
             if not coordinates:
-                iface.messageBar().pushCritical('GWS Fehler!', 'GWS unterstützt kein AlkisGeocoder!')
+                iface.messageBar().pushCritical(
+                    'GWS Fehler!',
+                    'GWS unterstützt kein AlkisGeocoder!')
 
-            for (fid,coords) in zip(fid_list, coordinates):
+            for (fid, coords) in zip(fid_list, coordinates):
                 if coords:
                     feature = mem_layer.getFeature(fid)
                     x = coords[0]
@@ -221,23 +248,35 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
                     feature.setGeometry(QgsGeometry.fromPointXY(geom))
                     mem_layer.updateFeature(feature)
 
-            geom_features = len(list(filter(lambda x: x.hasGeometry(),[f for f in mem_layer.getFeatures()])))
+            geom_features = len(list(filter(
+                lambda x: x.hasGeometry(),
+                [f for f in mem_layer.getFeatures()])))
             if geom_features > 0:
-                iface.messageBar().pushSuccess('Geocodierung abgeschlossen', '%s von %s Features konnten geocodiert werden' % (geom_features, layer.featureCount()))
+                iface.messageBar().pushSuccess(
+                    'Geocodierung abgeschlossen',
+                    '%s von %s Features konnten geocodiert werden'
+                    % (geom_features, layer.featureCount()))
                 mem_layer.commitChanges()
                 QgsProject.instance().addMapLayer(mem_layer)
             else:
-                del(mem_layer)
-                iface.messageBar().pushCritical('Geocodierung fehlgeschlagen', 'Es konnten keine Features geocodiert werden.')
-        elif reply.error() == 3: # Host not found 
+                del mem_layer
+                iface.messageBar().pushCritical(
+                    'Geocodierung fehlgeschlagen',
+                    'Es konnten keine Features geocodiert werden.')
+        elif reply.error() == 3:
+            # Host not found
             iface.messageBar().pushCritical(
-                'Netzwerkfehler', 'Host {} nicht gefunden'.format(str(self.gws_url)))
-        elif reply.error() == 201: # Access denied (403)
+                'Netzwerkfehler',
+                'Host {} nicht gefunden'.format(str(self.gws_url)))
+        elif reply.error() == 201:
+            # Access denied (403)
             iface.messageBar().pushCritical(
                 'GWS Fehler!', 'falsche Zugangsdaten')
-        else: # Some other error
+        else:
+            # Some other error
             iface.messageBar().pushCritical(
-                'Netzwerkfehler', 'Code {}'.format(reply.error()))
+                'Netzwerkfehler',
+                'Code {}'.format(reply.error()))
 
         self.setEnabled(True)
         QApplication.setOverrideCursor(Qt.ArrowCursor)
