@@ -25,7 +25,9 @@ Wenn Sie das GBD ALKIS Geocoder Plugin in QGIS geladen und geöffnet haben, find
 <img src="/images/geocoder_blank.png"/>
 
 Da das Plugin das [Authentifizierungssystem 🔐](https://docs.qgis.org/3.10/de/docs/user_manual/auth_system/auth_overview.html) von QGIS verwendet, kann es sein, dass beim erstmaligen starten ein Hauptkennwort vergeben werden muss.
+
 <img src="./images/auth_manager.png"/>
+
 Dies ist nur der Fall, wenn das Authentifizierungssystem nicht bereits für andere Zugangsdaten verwendet wurde.
 
 Anschließend kann über das grüne Plus Symbol ein neuer Authentifizierungsdatensatz erstellt werden.
