@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>605</width>
-    <height>543</height>
+    <width>619</width>
+    <height>465</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,61 +19,27 @@
      <item>
       <widget class="QGroupBox" name="groupBox">
        <property name="title">
-        <string>GBD Websuite</string>
+        <string>Authentifizierung</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
-         <layout class="QFormLayout" name="formLayout_3">
-          <item row="0" column="0">
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>Host</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QLineEdit" name="hostnameLineEdit"/>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QGroupBox" name="authBox">
-          <property name="title">
-           <string>Authentifizierung</string>
-          </property>
-          <layout class="QFormLayout" name="formLayout_2">
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_6">
-             <property name="text">
-              <string>User</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLineEdit" name="userLineEdit"/>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_7">
-             <property name="text">
-              <string>Passwort</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QgsPasswordLineEdit" name="passwordLineEdit"/>
-           </item>
-           <item row="2" column="1">
-            <widget class="QPushButton" name="loginButton">
-             <property name="text">
-              <string>Login</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
+         <widget class="QgsAuthConfigSelect" name="authCfgSelect"/>
         </item>
        </layout>
       </widget>
+     </item>
+     <item>
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
      </item>
      <item>
       <widget class="QGroupBox" name="groupBox_2">
@@ -180,6 +146,11 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>QgsAuthConfigSelect</class>
+   <extends>QWidget</extends>
+   <header>qgsauthconfigselect.h</header>
+  </customwidget>
+  <customwidget>
    <class>QgsFieldComboBox</class>
    <extends>QComboBox</extends>
    <header>qgsfieldcombobox.h</header>
@@ -189,11 +160,6 @@
    <extends>QComboBox</extends>
    <header>qgsmaplayercombobox.h</header>
   </customwidget>
-  <customwidget>
-   <class>QgsPasswordLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>qgspasswordlineedit.h</header>
-  </customwidget>
  </customwidgets>
  <tabstops>
   <tabstop>tableLayer</tabstop>
@@ -202,7 +168,6 @@
   <tabstop>hausnummerField</tabstop>
   <tabstop>generateLayerButton</tabstop>
   <tabstop>cancelButton</tabstop>
-  <tabstop>textBrowser</tabstop>
  </tabstops>
  <resources/>
  <connections>

@@ -22,15 +22,27 @@ Bedienung
 ---------
 Wenn Sie das GBD ALKIS Geocoder Plugin in QGIS geladen und geöffnet haben, finden Sie folgendes Fenster vor:
 
-<img src="/images/geocoder_blank.png" width="500">
+<img src="/images/geocoder_blank.png"/>
 
-Zuerst müssen Sie eine URL eintragen die Ihnen Zugriff auf die GBD Websuite API ermöglicht.
+Da das Plugin das [Authentifizierungssystem 🔐](https://docs.qgis.org/3.10/de/docs/user_manual/auth_system/auth_overview.html) von QGIS verwendet, kann es sein, dass beim erstmaligen starten ein Hauptkennwort vergeben werden muss.
 
-Wenn Sie die URL eingetragen haben, schaut das Plugin ob für diese eine Authentifizierung per Benutzer und Passwort nötig ist. Falls ja, tragen Sie einen für diese URL verifizierten Benutzer mit Passwort ein. Dann muss die Auswahl einer in QGIS bereits geladenen Tabelle (z.B. Excel, CSV oder OpenOffice Tabelle (.ods)) mit Adressdaten erfolgen. Ort, Straße und Hausnummer müssen in einer eigenen Spalte abgelegt sein.
+<img src="./images/auth_manager.png"/>
+
+Dies ist nur der Fall, wenn das Authentifizierungssystem nicht bereits für andere Zugangsdaten verwendet wurde.
+
+Anschließend kann über das grüne Plus Symbol ein neuer Authentifizierungsdatensatz erstellt werden.
+Sie können hier aber auch ihre bereits vorhandene GWS-Verbindung auswählen.
+
+Wichtig ist, dass Sie als Authentifizierungsart *Einfache Authentifizierung* auswählen und bei Quelle die URL der GWS-Instanz angeben.
+
+<img src="./images/auth_config.png"/>
+
+
+Anschließend muss die Auswahl einer in QGIS bereits geladenen Tabelle (z.B. Excel, CSV oder OpenOffice Tabelle (.ods)) mit Adressdaten erfolgen. Ort, Straße und Hausnummer müssen in einer eigenen Spalte abgelegt sein.
 
 Jetzt weisen Sie die Spalten Gemarkung (Ort), Straße und Hausnummer manuell zu. Über den Button 'Layer generieren' starten Sie die Geokodierung. Ein neuer temporärer Punktlayer mit lat und lon werten wird erstellt und direkt in das QGIS Layerfenster geladen. Die zugewiesenen Punktkoordinaten werden in zwei neue Spalten zu den Werte der Ausgangstabelle ergänzt.
 
-<img src="/images/geocoder_filled.png" width="500">
+<img src="/images/geocoder_filled.png"/>
 
 ## Lizenz
 
