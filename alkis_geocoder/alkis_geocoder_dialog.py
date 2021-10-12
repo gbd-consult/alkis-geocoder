@@ -213,12 +213,6 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
             hausnummer = feature[self.hausnummerField.currentField()]
             if gemarkung and strasse and hausnummer:
                 addr_list.append({
-                    'gemarkung': gemarkung,
-                    'strasse': strasse,
-                    'hausnummer': str(hausnummer)
-                })
-                fid_list.append(feature.id())
-                addr_list.append({
                     'gemeinde': gemarkung,
                     'strasse': strasse,
                     'hausnummer': str(hausnummer)
@@ -226,57 +220,70 @@ class AlkisGeocoderDialog(QDialog, FORM_CLASS):
                 })
                 fid_list.append(feature.id())
 
-        # basicauth:
-        reply = self.geocode_addresses(addr_list)
-        if reply.error() == 0:
-            # No Error
-            coordinates = json.loads(
-                str(reply.content(), 'utf-8')).get('coordinates')
-            if not coordinates:
-                iface.messageBar().pushCritical(
-                    'GWS Fehler!',
-                    'GWS unterstützt kein AlkisGeocoder!')
+        # CHUNKSIZE
+        n= 100
+        addr_chunks = [addr_list[i:i+n] for i in range(0, len(addr_list), n)]
+        fid_chunks = [fid_list[i:i+n] for i in range(0, len(fid_list), n)]
 
-            for (fid, coords) in zip(fid_list, coordinates):
-                if coords:
-                    feature = mem_layer.getFeature(fid)
-                    x = coords[0]
-                    y = coords[1]
-                    feature.setAttribute('lat', x)
-                    feature.setAttribute('lon', y)
-                    geom = QgsPointXY(x, y)
-                    feature.setGeometry(QgsGeometry.fromPointXY(geom))
-                    mem_layer.updateFeature(feature)
+        result = []
+        for addr_chunk, fid_chunk in zip(addr_chunks, fid_chunks):
+            reply = self.geocode_addresses(addr_chunk)
+            if reply.error() != 0:
+                if reply.error() == 3:
+                    # Host not found
+                    iface.messageBar().pushCritical(
+                        'Netzwerkfehler',
+                        'Host {} nicht gefunden'.format(str(self.gws_url)))
+                    break
+                elif reply.error() == 201:
+                    # Access denied (403)
+                    iface.messageBar().pushCritical(
+                        'GWS Fehler!', 'falsche Zugangsdaten')
+                    break
+                else:
+                    # Some other error
+                    iface.messageBar().pushCritical(
+                        'Netzwerkfehler',
+                        'Code {}'.format(reply.error()))
+                    break
+            else: # No Error
+                coordinates = json.loads(
+                    str(reply.content(), 'utf-8')).get('coordinates')
+                if not coordinates:
+                    iface.messageBar().pushCritical(
+                        'GWS Fehler!',
+                        'GWS unterstützt kein AlkisGeocoder!')
+                    break
+                else:
+                    for item in zip(fid_chunk, coordinates):
+                        result.append(item)
+            
+        for (fid, coords) in result:
+            if coords:
+                feature = mem_layer.getFeature(fid)
+                x = coords[0]
+                y = coords[1]
+                feature.setAttribute('lat', x)
+                feature.setAttribute('lon', y)
+                geom = QgsPointXY(x, y)
+                feature.setGeometry(QgsGeometry.fromPointXY(geom))
+                mem_layer.updateFeature(feature)
 
-            geom_features = len(list(filter(
-                lambda x: x.hasGeometry(),
-                [f for f in mem_layer.getFeatures()])))
-            if geom_features > 0:
-                iface.messageBar().pushSuccess(
-                    'Geocodierung abgeschlossen',
-                    '%s von %s Features konnten geocodiert werden'
-                    % (geom_features, layer.featureCount()))
-                mem_layer.commitChanges()
-                QgsProject.instance().addMapLayer(mem_layer)
-            else:
-                del mem_layer
-                iface.messageBar().pushCritical(
-                    'Geocodierung fehlgeschlagen',
-                    'Es konnten keine Features geocodiert werden.')
-        elif reply.error() == 3:
-            # Host not found
-            iface.messageBar().pushCritical(
-                'Netzwerkfehler',
-                'Host {} nicht gefunden'.format(str(self.gws_url)))
-        elif reply.error() == 201:
-            # Access denied (403)
-            iface.messageBar().pushCritical(
-                'GWS Fehler!', 'falsche Zugangsdaten')
+        geom_features = len(list(filter(
+            lambda x: x.hasGeometry(),
+            [f for f in mem_layer.getFeatures()])))
+        if geom_features > 0:
+            iface.messageBar().pushSuccess(
+                'Geocodierung abgeschlossen',
+                '%s von %s Features konnten geocodiert werden'
+                % (geom_features, layer.featureCount()))
+            mem_layer.commitChanges()
+            QgsProject.instance().addMapLayer(mem_layer)
         else:
-            # Some other error
+            del mem_layer
             iface.messageBar().pushCritical(
-                'Netzwerkfehler',
-                'Code {}'.format(reply.error()))
+                'Geocodierung fehlgeschlagen',
+                'Es konnten keine Features geocodiert werden.')
 
         self.setEnabled(True)
         QApplication.setOverrideCursor(Qt.ArrowCursor)
